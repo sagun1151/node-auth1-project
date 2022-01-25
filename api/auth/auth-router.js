@@ -3,7 +3,11 @@
 const router = require("express").Router();
 const bcrypt = require("bcryptjs");
 const Users = require("../users/users-model");
-const { checkUsernameFree, checkUsernameExists, checkPasswordLength } = require("./auth-middleware");
+const {
+  checkUsernameFree,
+  checkUsernameExists,
+  checkPasswordLength,
+} = require("./auth-middleware");
 
 /**
   1 [POST] /api/auth/register { "username": "sue", "password": "1234" }
@@ -35,11 +39,8 @@ router.post(
     try {
       const { username, password } = req.body;
       const hash = bcrypt.hashSync(password, 8);
-      const newUser = { username, password: hash };
-      const insert = await Users.add(newUser);
-      res
-        .status(200)
-        .json({ user_id: insert.user_id, username: insert.username });
+      const user = await Users.add({ username, password: hash });
+      res.status(200).json({ user_id: user.user_id, username: user.username });
     } catch (error) {
       next(error);
     }
@@ -61,17 +62,19 @@ router.post(
     "message": "Invalid credentials"
   }
  */
-router.post('/login', checkUsernameExists, (req, res, next) => {
-  const {password}= req.body
+router.post("/login", checkUsernameExists, (req, res, next) => {
+  const { password } = req.body;
   try {
-    if(bcrypt.compareSync(password, req.user.password )){
+    if (bcrypt.compareSync(password, req.user.password)) {
       req.session.user = req.user;
-      res.status(200).json({message:`Welcome ${req.user.username}!`})
+      res.status(200).json({ message: `Welcome ${req.user.username}!` });
+    } else {
+      next({status:401, message: 'Invalid Credentials'})
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 /**
   3 [GET] /api/auth/logout
 
@@ -87,13 +90,13 @@ router.post('/login', checkUsernameExists, (req, res, next) => {
     "message": "no session"
   }
  */
-  router.get('/logout', (req,res) => {
-    if(req.session.user){
-      req.session.destroy()
-      res.status(200).json({message:'logged out'})
-    }else {
-      res.status(200).json({message: "no session"})
-    }
-  })
+router.get("/logout", (req, res) => {
+  if (req.session.user) {
+    req.session.destroy();
+    res.status(200).json({ message: "logged out" });
+  } else {
+    res.status(200).json({ message: "no session" });
+  }
+});
 // Don't forget to add the router to the `exports` object so it can be required in other modules
 module.exports = router;

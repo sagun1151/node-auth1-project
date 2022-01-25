@@ -28,7 +28,7 @@ server.use(session({
   name: 'chocolatechip',
   secret: process.env.SECRET || 'keep it secret',
   cookie: {
-    maxAge: 1000 * 60 * 60,
+    maxAge: 1000 * 60 * 10,
     secure: false, // if true, only works on HTTPS
     httpOnly: false, // if true, javascript can't read cookie
   },
